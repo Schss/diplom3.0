@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./static:/usr/share/nginx/html
+    depends_on:
+      - score-server
+
+  score-server:
+    build:
+      context: ./score-server
+    ports:
+      - "8080:8080"

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игровой портал</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #343a40;
+            margin: 0;
+            padding-top: 10%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 90vh;
+            text-align: center;
+            color: white;
+        }
+        .container {
+            background: #495057;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 800px;
+            width: 100%;
+            margin: 20px;
+            position: relative;
+        }
+        h1 {
+            color: #17a2b8;
+            margin-bottom: 30px;
+        }
+        .game-link {
+            display: block;
+            background-color: #6c757d;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            color: white;
+            text-decoration: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .game-link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.4);
+        }
+        .game-title {
+            font-size: 18px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .game-image {
+            max-width: 100%;
+            height: auto; /* Высота изображения будет подстраиваться автоматически */
+            border-radius: 5px;
+            transition: opacity 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+            .game-link {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Добро пожаловать на игровой портал!</h1>
+        <a href="balloons/index.html" class="game-link" 
+            onmouseenter="previewAnimation(this, true)" onmouseleave="previewAnimation(this, false)"
+            ontouchstart="previewAnimation(this, true)" ontouchend="previewAnimation(this, false)">
+            <span class="game-title">Игра с воздушными шарами</span>
+            <img src="balloons/static-image.png" alt="Превью игры с воздушными шарами" class="game-image" data-static="balloons/static-image.png" data-animated="balloons/animated-preview.gif">
+        </a>
+        <a href="cubes/index.html" class="game-link"
+            onmouseenter="previewAnimation(this, true)" onmouseleave="previewAnimation(this, false)"
+            ontouchstart="previewAnimation(this, true)" ontouchend="previewAnimation(this, false)">
+            <span class="game-title">Игра с кубиками</span>
+            <img src="cubes/static-image.png" alt="Превью игры с кубиками" class="game-image" data-static="cubes/static-image.png" data-animated="cubes/animated-preview.gif">
+        </a>
+        <a href="elevator/index.html" class="game-link">
+            <span class="game-title">Игра с лифтом</span>
+            <img src="elevator/static-image.png" alt="Превью игры с лифтом" class="game-image" data-static="elevator/static-image.png" data-animated="elevator/animated-preview.gif">
+        </a>
+        <a href="shashki/index.html" class="game-link"
+            onmouseenter="previewAnimation(this, true)" onmouseleave="previewAnimation(this, false)"
+            ontouchstart="previewAnimation(this, true)" ontouchend="previewAnimation(this, false)">
+            <span class="game-title">Игра Шашки по городу</span>
+            <img src="shashki/static-image.png" alt="Превью игры в Шашки" class="game-image" data-static="shashki/static-image.png" data-animated="shashki/animated-preview.gif">
+        </a>
+        <a href="webgl/index.html" class="game-link"
+            onmouseenter="previewAnimation(this, true)" onmouseleave="previewAnimation(this, false)"
+            ontouchstart="previewAnimation(this, true)" ontouchend="previewAnimation(this, false)">
+            <span class="game-title">Игра Unity</span>
+            <img src="webgl/static-image.png" alt="Превью игры Unity" class="game-image" data-static="webgl/static-image.png" data-animated="webgl/animated-preview.gif">
+        </a>
+    </div>
+
+    <script>
+        // Функция для изменения превью игры
+        function previewAnimation(element, isAnimated) {
+            var image = element.querySelector('.game-image');
+            if (isAnimated) {
+                // Меняем на анимированную гифку
+                image.src = image.getAttribute('data-animated');
+            } else {
+                // Возвращаем статичное изображение
+                image.src = image.getAttribute('data-static');
+            }
+        }
+    </script>
+</body>
+</html>
