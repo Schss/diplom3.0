@@ -1,0 +1,16 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background-color: #000; /* Задаем цвет фона, соответствующий игре */
+}
+
+canvas {
+    display: block;
+    width: 100vw;   /* 100% от ширины окна просмотра */
+    height: 100vh;  /* 100% от высоты окна просмотра */
+    object-fit: cover; /* Сохраняет пропорции, не обрезая содержимое */
+    image-rendering: pixelated; /* Для четкого отображения пикселей при масштабировании */
+}
