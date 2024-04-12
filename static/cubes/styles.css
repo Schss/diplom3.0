@@ -1,0 +1,96 @@
+#game-board {
+    display: flex;
+    flex-wrap: wrap; /* Позволяет элементам переноситься на следующую строку */
+    justify-content: space-around; /* Равномерно распределяет столбцы по доступному горизонтальному пространству */
+    align-items: flex-start; /* Выравнивает элементы по верхнему краю, что улучшает вид при многострочном расположении */
+    height: auto; /* Высота автоматически адаптируется под количество строк */
+    width: 100%;
+    background-color: #8C6D62;
+    padding: 10px;
+}
+
+#record-display {
+    padding: 10px;
+    margin-top: 20px;
+    background-color: #444; /* Темный фон для контраста */
+    color: #fff; /* Белый текст для чтения */
+    font-size: 1.5em; /* Увеличенный размер шрифта */
+    text-align: center;
+    border-radius: 8px;
+    width: 50%;
+    margin-left: auto; /* Центрирование блока */
+    margin-right: auto; /* Центрирование блока */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* Тень для объемного эффекта */
+}  
+
+.column {
+    width: 100px; /* Фиксированная ширина столбца */
+    height: auto; /* Высота столбца теперь автоматически адаптируется под содержимое */
+    min-height: 150px; /* Минимальная высота столбца */
+    margin: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end; /* Элементы выравниваются по нижней части столбца */
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.cube {
+    width: 80%; /* Процентная ширина относительно столбца */
+    height: 50px; /* Фиксированная высота каждого кубика */
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    transition: transform 0.5s ease; /* Анимация перемещения */
+}
+
+.selected {
+    opacity: 0.6;
+    border: 2px dashed #fff;
+}
+
+
+/* Стили для кнопки рестарта */
+.restart-button {
+    display: block; /* Сделать кнопку блочным элементом */
+    width: 150px; /* Ширина кнопки */
+    padding: 10px 20px; /* Внутренние отступы */
+    margin: 30px auto; /* Верхний и нижний отступы, auto центрирует элемент по горизонтали */
+    font-size: 20px; /* Размер шрифта текста на кнопке */
+    color: #fff; /* Цвет текста */
+    background-color: #5C6BC0; /* Цвет фона кнопки */
+    border: none; /* Убрать границу */
+    border-radius: 5px; /* Скругление углов */
+    cursor: pointer; /* Курсор в виде руки при наведении */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Тень кнопки */
+    transition: background-color 0.3s ease; /* Плавное изменение цвета при наведении */
+}
+
+.restart-button:hover {
+    background-color: #3949AB; /* Изменение цвета фона кнопки при наведении */
+}
+
+.record-update-animation {
+    animation: pop-in 2s ease forwards; /* Увеличьте время с 1s до 2s */
+  }
+  
+  @keyframes pop-in {
+    0% {
+      transform: scale(0.5);
+      opacity: 0.5;
+    }
+    70% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+}
+  
