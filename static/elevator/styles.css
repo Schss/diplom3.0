@@ -1,0 +1,133 @@
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+    margin-top: 2vh;
+    padding: 0;
+}
+
+svg
+{
+    position: relative;
+    z-index: 99;
+}
+
+#building {
+    height: 80vh; /* процент от высоты видимой области */
+    width: 15vw; /* процент от ширины видимой области */
+    background-color: #ddd;
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+#elevator {
+    height: 8vh; /* высота одного этажа в процентах */
+    width: 12vw; /* ширина лифта в процентах */
+    background-color: #f9f3f3;
+    position: absolute;
+    bottom: 0; /* Начинаем снизу */
+    transition: bottom 1s ease; /* Плавный переход */
+    padding-top: 1vh;
+    padding-left: 0.2vw;
+}
+#elevator-panel {
+    text-align: center;
+}
+button {
+    width: 10vw; /* ширина кнопки в процентах */
+    height: 5vh; /* высота кнопки в процентах */
+    margin: 1vw; /* отступ кнопки в процентах */
+    font-size: calc(1vw + 1vh); /* размер шрифта в зависимости от размера экрана */
+}
+
+/* Другие стили остаются без изменений */
+
+#elevator-system {
+    display: flex;
+    align-items: flex-end; /* Выравнивание элементов по низу */
+}
+
+.floors-container {
+    height: 80vh; /* Такая же высота, как и у здания */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Выравнивание этажей снизу вверх */
+    margin-left: 2vw; /* Отступ от шахты лифта */
+}
+
+.floor {
+    height: 8vh; /* Высота одного этажа */
+    width: 15vw; /* Ширина этажа */
+    background-color: #eaeaea; /* Цвет этажа */
+    border-top: 1px solid #ccc; /* Граница между этажами */
+    display: flex;
+    align-items: center; /* Выравнивание содержимого этажа по центру */
+    justify-content: flex-start;
+    position: relative; /* Для позиционирования людей на этаже */
+}
+
+/* Existing styles ... */
+
+.labels-container {
+    display: flex;
+    flex-direction: column; /* Align labels from bottom to top */
+    align-items: flex-start; /* Align labels to the start (left side) */
+    padding-left: 1vw; /* Space between floors and labels */
+}
+
+.floor-label {
+    height: 8vh; /* Same height as floor for alignment */
+    display: flex;
+    align-items: center; /* Center text vertically */
+    justify-content: center; /* Center text horizontally */
+    font-size: calc(1vw + 1vh); /* Responsive font size */
+    margin: 0; /* Remove any margin if present */
+}
+
+@keyframes stepMotion {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-2px);
+    }
+}
+
+.leg {
+    animation: stepMotion 0.5s ease-in-out infinite;
+}
+
+@keyframes walkingNew {
+    0%, 100% {
+        transform: translate(0, 0);
+    }
+    25% {
+        transform: translate(-2px, -1px) rotate(-15deg);
+    }
+    50% {
+        transform: translate(0, -2px);
+    }
+    75% {
+        transform: translate(2px, -1px) rotate(15deg);
+    }
+}
+
+.walkingleg {
+    animation: walkingNew 1s ease-in-out infinite;
+    transform-origin: top;
+}
+
+.game-message {
+    font-family: Arial, sans-serif;
+    color: black;
+    text-align: center;
+}
+
+button {
+    margin-top: 20px;
+    cursor: pointer;
+}
+
+

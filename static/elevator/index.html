@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Игра Лифт</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="elevator-system">
+    <div id="building">
+        <div id="elevator"></div>
+    </div>
+    <div class="floors-container">
+        <!-- Контейнеры этажей и надписей будут добавлены в JavaScript -->
+    </div>
+</div>
+<div id="elevator-panel">
+    <h1>Текущий этаж: <span id="current-floor">1</span></h1>
+    <button onclick="move('up')">Вверх</button>
+    <button onclick="move('down')">Вниз</button>
+    <button onclick="stop()">Стоп</button>
+</div>
+<div id="gameMessage" class="game-message" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; background-color: white; border: 2px solid black; z-index: 100;">
+    <p id="gameMessageText"></p>
+    <button onclick="restartGame()">Ок</button>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
