@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Игра</title>
+<style>
+  /* Стили для иконки "Рекорды" */
+  .record-icon {
+    position: fixed;
+    top: 20px; /* Изменено с bottom на top */
+    right: 20px;
+    width: 50px; /* Размер иконки */
+    height: 50px; /* Размер иконки */
+    background: url('../records/award-solid.svg') no-repeat center center;
+    background-size: contain; /* Изменено с cover на contain */
+    cursor: pointer;
+    z-index: 1000;
+    opacity: 0.5; /* Добавлена полупрозрачность */
+    }
+
+  /* Стили для модального окна */
+  .modal {
+    display: none; /* Скрыть модальное окно по умолчанию */
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Полупрозрачный фон */
+    z-index: 1001;
+  }
+
+  /* Стили для контента модального окна */
+  .modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 80%;
+    max-width: 500px; /* Максимальная ширина модального окна */
+  }
+
+  /* Стили для кнопки закрытия модального окна */
+  .close-btn {
+    float: right;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- Иконка "Рекорды" -->
+<div class="record-icon" id="recordIcon"></div>
+
+<!-- Модальное окно для рекордов -->
+<div class="modal" id="recordModal">
+  <div class="modal-content">
+    <span class="close-btn" id="closeModal">&times;</span>
+    <h2>Рекорды</h2>
+    <!-- Содержимое модального окна -->
+    <div id="recordsTable">Здесь будут рекорды...</div>
+  </div>
+</div>
+<script src="../records/record_script_for_html.js"></script>
+</body>
+</html>
