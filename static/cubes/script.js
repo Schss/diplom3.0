@@ -1,6 +1,8 @@
+import  {submitRecord, updateRecordDisplay, writeRecord} from '../records/record_functions.js'
+
 // Глобальные переменные
 const gameBoard = document.getElementById('game-board');
-const plusCubes = 2; 
+const plusCubes = 2;
 let isGameOver = false;
 let cubesPerColor;
 let numberOfColors;
@@ -70,14 +72,16 @@ let selectedGroup = null;
 
 function restartGame() {
     showRestartButton();
-    numberOfColors = parseInt(prompt("Enter the number of colors:", 4)); // Запрашиваем количество цветов
+    numberOfColors = parseInt(prompt("Enter the number of colors (>1):", 4)); // Запрашиваем количество цветов
     cubesPerColor = parseInt(prompt("Enter the number of cubes per color:", 3)); // Запрашиваем количество кубиков на цвет
 
-    if (numberOfColors === null || cubesPerColor === null || isNaN(numberOfColors) || isNaN(cubesPerColor) || numberOfColors <= 0 || cubesPerColor <= 0) {
+    if (numberOfColors === null || cubesPerColor === null || isNaN(numberOfColors) || isNaN(cubesPerColor) || numberOfColors <= 1 || cubesPerColor <= 0) {
         alert('Please enter valid positive numbers.');
         return; // Выходим из функции, чтобы не продолжать инициализацию игры
     }
 
+    if ((numberOfColors > 50 || cubesPerColor > 50) && !confirm('А оперативки хватит? :)'))
+        return;
     // Очищаем игровое поле
     while (gameBoard.firstChild) {
         gameBoard.removeChild(gameBoard.firstChild);
@@ -89,8 +93,8 @@ function restartGame() {
 
     // Повторная инициализация игры с новыми параметрами
     initializeGame(numberOfColors, cubesPerColor);
-    const maxFieldSizeRecord = localStorage.getItem('maxFieldSizeRecord') || 0;
-    updateRecordDisplay(maxFieldSizeRecord);
+    const maxFieldSizeRecord = localStorage.getItem('maxScore_cubes') || 0;
+    updateRecordDisplay(maxFieldSizeRecord, 'cubes');
 }
 
 
@@ -106,23 +110,6 @@ function showRestartButton() {
     }
 }
 
-function updateRecordDisplay(record) {
-    let recordDisplay = document.getElementById('record-display');
-    if (!recordDisplay) {
-        recordDisplay = document.createElement('div');
-        recordDisplay.id = 'record-display';
-        document.body.appendChild(recordDisplay);
-    }
-    recordDisplay.textContent = 'Record: ' + record;
-    recordDisplay.classList.add('record-update-animation');
-
-    // Удаление класса анимации после её завершения
-    setTimeout(() => {
-        recordDisplay.classList.remove('record-update-animation');
-    }, 2000); // Время до 2 секунд
-    loadRecords();
-}
-
 function checkWin() {
 
     if (isGameOver) {
@@ -133,7 +120,7 @@ function checkWin() {
 
     for (let column of gameBoard.children) {
         let cubes = Array.from(column.children);
-        
+
         // Если в столбце есть кубики, проверяем их цвета
         if (cubes.length > 0) {
             let columnColor = cubes[0].dataset.color;
@@ -152,19 +139,10 @@ function checkWin() {
 
     // Если все кубики одного цвета находятся в одном столбце и нет смешанных столбцов, игрок выиграл
     // Обновление рекорда
-    const currentRecord = localStorage.getItem('maxFieldSizeRecord') || 0;
+    const currentRecord = localStorage.getItem('maxScore_cubes') || 0;
     const currentFieldSize = numberOfColors * cubesPerColor;
     if (currentFieldSize > currentRecord) {
-        localStorage.setItem('maxFieldSizeRecord', currentFieldSize);
-        // Обновляем отображаемый рекорд
-        updateRecordDisplay(currentFieldSize);
-        // Запрос на загрузку рекорда на сервер
-        if (window.confirm('Congratulations! You set a new record. Would you like to submit your score to the leaderboard?')) {
-            const playerName = window.prompt('Please enter your name:', '');
-            if (playerName) {
-                submitRecord(playerName, currentFieldSize); // Отправляем рекорд на сервер
-            }
-        }
+        writeRecord(currentFieldSize, 'cubes')
     }
     alert("You win!");
     isGameOver = true; // Обновляем флаг, указывая на окончание игры
@@ -234,13 +212,13 @@ function placeGroup(targetColumn) {
 
     if (targetColumn.children.length === 0 || targetColor === selectedGroup.color) {
         selectedGroup.cubes.forEach((cube, index) => {
-            // Добавляем кубик в целевой столбец
+            // Устанавливаем order так, чтобы кубики оказались сверху
+            cube.style.order = -(targetColumn.children.length + index + 1);
+
+            // Устанавливаем начальное положение для анимации падения
+            cube.style.transform = 'translateY(-100%)';
             targetColumn.appendChild(cube);
             cube.classList.remove('selected');
-
-            // Вычисляем высоту "падения" в зависимости от количества переносимых кубиков
-            let height = groupLength * 50; // Предполагаем, что высота кубика 50px
-            cube.style.transform = `translateY(-${height}px)`;
 
             // Анимируем падение
             setTimeout(() => {
@@ -255,6 +233,11 @@ function placeGroup(targetColumn) {
             }, index * 100 + 500); // После завершения анимации
         });
 
+        // Обновляем order для всех кубиков в столбце
+        Array.from(targetColumn.children).forEach((cube, index) => {
+            cube.style.order = -(index + 1);
+        });
+
         // Запуск проверки на выигрыш после последней анимации
         setTimeout(checkWin, groupLength * 100 + 500);
         selectedGroup = null;
@@ -266,75 +249,4 @@ function placeGroup(targetColumn) {
         selectedGroup = null;
         alert("You can only place on top of the same color or in an empty column!");
     }
-}
-
-
-// Функция для отправки рекорда на сервер
-function submitRecord(name, score) {
-    fetch('/api/record', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            name: name,
-            game: 'cubes',
-            score: score
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.hash) {
-            // Сохраняем хеш в localStorage для последующих запросов
-            localStorage.setItem('playerHash', data.hash);
-        }
-        console.log('Record submitted:', data);
-        loadRecords();
-    })
-    .catch(error => console.error('Error submitting record:', error));
-}
-
-// Функция для загрузки таблицы рекордов
-function loadRecords() {
-    fetch('/api/records?game=cubes')
-    .then(response => response.json())
-    .then(data => {
-        console.log('Records loaded:', data);
-        displayRecords(data);
-    })
-    .catch(error => console.error('Error loading records:', error));
-}
-
-// Функция для отображения таблицы рекордов
-function displayRecords(records) {
-    // Создаем или находим элемент для отображения рекордов
-    let recordsTable = document.getElementById('records-table');
-    if (!recordsTable) {
-        recordsTable = document.createElement('div');
-        recordsTable.id = 'records-table';
-        document.body.appendChild(recordsTable);
-    }
-
-    // Очищаем предыдущие записи
-    recordsTable.innerHTML = '';
-
-    // Добавляем заголовок таблицы
-    recordsTable.innerHTML += '<h2>Top Scores for Cubes</h2>';
-
-    // Создаем список для отображения рекордов
-    let list = document.createElement('ol');
-    records.forEach(record => {
-        let listItem = document.createElement('li');
-        listItem.textContent = `${record.name}: ${record.score}`;
-        list.appendChild(listItem);
-    });
-    recordsTable.appendChild(list);
-}
-
-
-
-function getRandomInt(min, max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min)) + min;
 }
