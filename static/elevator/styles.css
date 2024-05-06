@@ -8,10 +8,11 @@ body {
     padding: 0;
 }
 
-svg
-{
+svg {
     position: relative;
-    z-index: 99;
+    z-index: 101; /* Повышаем z-index для человечков */
+    max-width: 100%;
+    height: calc(100% - 10%); /* Чуть меньше высоты контейнера */
 }
 
 #building {
@@ -21,20 +22,28 @@ svg
     display: flex;
     justify-content: center;
     position: relative;
+    z-index: 1; /* Ставим шахту лифта ниже */
 }
+
 #elevator {
     height: 8vh; /* высота одного этажа в процентах */
     width: 12vw; /* ширина лифта в процентах */
     background-color: #f9f3f3;
     position: absolute;
+    overflow: visible;
     bottom: 0; /* Начинаем снизу */
     transition: bottom 1s ease; /* Плавный переход */
     padding-top: 1vh;
     padding-left: 0.2vw;
+    display: /*flex*/inline-table;
+    flex-wrap: wrap; /* Добавлено для переноса элементов */
+    z-index: 100; /* Устанавливаем z-index для лифта */
 }
+
 #elevator-panel {
     text-align: center;
 }
+
 button {
     width: 10vw; /* ширина кнопки в процентах */
     height: 5vh; /* высота кнопки в процентах */
@@ -66,9 +75,9 @@ button {
     align-items: center; /* Выравнивание содержимого этажа по центру */
     justify-content: flex-start;
     position: relative; /* Для позиционирования людей на этаже */
+    overflow: visible; /* предотвращаем выход элементов за границы */
+    z-index: 2; /* Устанавливаем z-index для этажей */
 }
-
-/* Existing styles ... */
 
 .labels-container {
     display: flex;
@@ -123,6 +132,14 @@ button {
     font-family: Arial, sans-serif;
     color: black;
     text-align: center;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    background-color: white;
+    border: 2px solid black;
+    z-index: 100;
 }
 
 button {
@@ -130,4 +147,61 @@ button {
     cursor: pointer;
 }
 
+#score-board {
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    text-align: left;
+    font-size: 1.5vw; /* Адаптивный размер шрифта */
+    color: rgb(104, 177, 229); /* Цвет текста */
+    z-index: 10; /* Убедитесь, что счёт виден поверх других элементов */
+}
+
+@media (max-width: 768px) {
+    #score-board {
+        font-size: 2.5vw; /* Увеличиваем размер шрифта на маленьких экранах */
+    }
+}
+
+@media (max-width: 480px) {
+    #score-board {
+        font-size: 3.5vw; /* Увеличиваем размер шрифта еще больше на очень маленьких экранах */
+    }
+}
+
+
+
+#elevator svg {
+    margin: 2px;
+    max-width: 20px; /* Ограничиваем максимальную ширину человечка */
+    height: auto;
+}
+
+/* Медиа-запросы для увеличения ширины лифта и контейнеров с этажами на маленьких экранах */
+@media (max-width: 768px) {
+    #building {
+        width: 30vw; /* Увеличиваем ширину здания на маленьких экранах */
+    }
+    #elevator {
+        width: 25vw; /* Увеличиваем ширину лифта на маленьких экранах */
+    }
+    .floor {
+        width: 30vw; /* Увеличиваем ширину этажа на маленьких экранах */
+    }
+}
+
+@media (max-width: 480px) {
+    button {
+        width: 28vw; /* Увеличиваем ширину кнопок на маленьких экранах */
+        height: 8vh; /* Увеличиваем высоту кнопок на маленьких экранах */
+        font-size: calc(2vw + 2vh); /* Увеличиваем размер шрифта на маленьких экранах */
+    }
+    /* #score-board {
+        font-size: 4vw;
+    } */
+}
+
+.game-message{
+    display: none;
+}
 

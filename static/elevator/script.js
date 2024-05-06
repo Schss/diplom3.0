@@ -1,3 +1,5 @@
+import {loadRecords, updateRecordDisplay, writeRecord} from '../records/record_functions.js';
+
 var currentFloor = 1;
 var totalFloors = 10;
 var moving = null;
@@ -5,17 +7,45 @@ const elevatorElement = document.getElementById('elevator');
 const buildingElement = document.getElementById('building');
 var floorsWithPeople = {};  // Объект для хранения информации о людях на этажах
 let maxCapacity = 3;
+var isElevatorReady = false;
 // Инициализация счётчика состояний
 var moodCounter = {
     happy: 0,
     unhappy: 0,
     angry: 0
-  };
-  
+};
+
+// Инициализация счетчика очков
+var score = 0;
+
+// Функция для обновления отображения счета
+function updateScoreDisplay() {
+    document.getElementById('current-score').textContent = `Счет: ${score}`;
+    const recordScore = localStorage.getItem('maxScore_elevator') || 0;
+    document.getElementById('record-score').textContent = `Рекорд: ${recordScore}`;
+}
 
 function getFloorHeight() {
     return buildingElement.clientHeight / totalFloors;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Получаем кнопки управления
+    const upButton = document.getElementById('upButton');
+    const downButton = document.getElementById('downButton');
+    const stopButton = document.getElementById('stopButton');
+
+    // Добавляем обработчики событий
+    upButton.addEventListener('click', () => move('up'));
+    downButton.addEventListener('click', () => move('down'));
+    stopButton.addEventListener('click', stop);
+
+    // Обновляем отображение счета при загрузке страницы
+    updateScoreDisplay();
+    loadRecords('elevator');
+    // updateRecordDisplay(parseInt(localStorage.getItem('maxScore_elevator')) || 0, 'elevator');
+    console.log(parseInt(localStorage.getItem('maxScore_elevator')|| 0))
+});
 
 function move(direction) {
     if (moving || !isElevatorReady) return;
@@ -73,28 +103,68 @@ function stop() {
 
 function exitHuman(human) {
     let floorElement = document.querySelector(`.floor:nth-child(${totalFloors - currentFloor + 1})`);
-    // Анимация выхода (как ранее)
+
+    // Устанавливаем z-index для анимации выхода
+    human.style.zIndex = "102";
+    human.style.position = null;
+    human.style.left = null;
+
+    // Получаем размеры лифта и этажа
+    let elevatorRect = elevatorElement.getBoundingClientRect();
+    let floorRect = floorElement.getBoundingClientRect();
+
+    // Расстояние перемещения человечка зависит от размеров экрана
+    let translateX = floorRect.width * 0.8;  // 40% ширины этажа
+
     human.querySelectorAll('.leg').forEach(leg => {
         leg.classList.remove("leg");
         leg.classList.add("walkingleg");
     });
 
     human.style.transition = 'transform 2s ease-in-out';
-    human.style.transform = 'translateX(130px)';  // Перемещаем человечка на 150px вправо
+    human.style.transform = `translateX(${translateX}px)`;  // Перемещаем человечка
 
     setTimeout(() => {
-        improveMood(human);
-        let mood = human.getAttribute('data-mood'); // Получаем текущее настроение человечка
-        updateMoodCounter(mood); // Обновляем счётчик состояний
+        let mood = human.getAttribute('data-mood');
+        updateMoodCounter(mood);
+        
+        // Добавляем очки в зависимости от настроения
+        if (mood === 'happy') {
+            score += 3;
+        } else if (mood === 'unhappy') {
+            score += 1;
+        } else if (mood === 'angry') {
+            score -= 1;
+        }
+
+        updateScoreDisplay(); // Обновляем отображение счета
+
         floorElement.appendChild(human);
-        human.style.transform = ''; // Сбрасываем transform
+
+        // Сбрасываем стили после завершения анимации
+        human.style.transform = '';
+        human.style.zIndex = '';
         human.querySelectorAll('.walkingleg').forEach(leg => {
             leg.classList.remove("walkingleg");
-            leg.classList.add("leg"); // Возвращаем нормальное состояние
+            leg.classList.add("leg");
         });
 
-        checkGameCompletion(); // Проверяем, завершена ли игра после выхода каждого человечка
+        // Ресайзим человечков на этаже
+        resizeHumansOnFloor(floorElement);
+
+        checkGameCompletion();
     }, 2000);  // Синхронизация с анимацией перемещения
+}
+
+function resizeHumansOnFloor(floorElement) {
+    const humansOnFloor = floorElement.querySelectorAll('svg');
+    const floorWidth = floorElement.clientWidth;
+
+    humansOnFloor.forEach(human => {
+        human.style.width = (floorWidth / (humansOnFloor.length + 1)) + 'px';
+        human.style.height = 'auto';
+        human.style.maxWidth = '20px'; // Ограничение максимальной ширины человечка
+    });
 }
 
 function checkAndMoveHumans() {
@@ -105,7 +175,6 @@ function checkAndMoveHumans() {
         moveHumansToElevator(humansOnFloor.slice(), floorElement);
     }
 }
-
 
 function moveHumansToElevator(humans, floor) {
     let currentCount = elevatorElement.childElementCount;
@@ -119,23 +188,75 @@ function moveHumansToElevator(humans, floor) {
             leg.classList.add("walkingleg");
         });
 
-        human.style.transition = 'transform 1s ease-in-out';
-        human.style.transform = `translate(${elevatorElement.getBoundingClientRect().left - floor.getBoundingClientRect().left}px, ${elevatorElement.getBoundingClientRect().top - floor.getBoundingClientRect().top}px)`;
+        let elevatorRect = elevatorElement.getBoundingClientRect();
+        let floorRect = floor.getBoundingClientRect();
 
+        // Calculate the target position inside the elevator
+        let targetX = currentCount * (elevatorRect.width / maxCapacity);
+        let targetY = 0;  // Assuming all humans stand in one row in the elevator
+
+        // Calculate the initial position relative to the floor
+        let initialX = elevatorRect.left - floorRect.left;
+        let initialY = elevatorRect.top - floorRect.top;
+
+        // Append the human to the floor to ensure it's in the correct context for positioning
+        floor.appendChild(human);
+
+        // Set the initial position to the current position
+        human.style.zIndex = "102"; // Set z-index for animation
+        human.style.position = 'absolute';
+        human.style.left = `${human.getBoundingClientRect().left - floorRect.left}px`;
+        human.style.top = `${human.getBoundingClientRect().top - floorRect.top}px`;
+        human.style.transition = 'none'; // Disable transitions initially
+
+        // Start the animation to move to the elevator
         setTimeout(() => {
-            if (elevatorElement.childElementCount < maxCapacity) {
-                elevatorElement.appendChild(humanClone);
-                humanClone.querySelectorAll('.walkingleg').forEach(leg => {
-                    leg.classList.remove("walkingleg");
-                    leg.classList.add("leg");
-                });
-                // Удаляем элемент из массива после успешного добавления в лифт
-                floorsWithPeople[currentFloor] = floorsWithPeople[currentFloor].filter(h => h !== human);
-                human.remove();
-            }
-        }, 1000);
+            human.style.transition = 'transform 1s ease-in-out';
+            human.style.transform = `translate(${initialX + targetX - parseFloat(human.style.left)}px, ${initialY + targetY - parseFloat(human.style.top)}px)`;
+
+            setTimeout(() => {
+                if (elevatorElement.childElementCount < maxCapacity) {
+                    human.style.transition = 'none'; // Disable transitions after animation
+                    human.style.transform = ''; // Reset transform
+                    human.style.position = ''; // Reset position
+                    human.style.zIndex = ""; // Reset z-index after animation
+                    elevatorElement.appendChild(humanClone);
+                    humanClone.querySelectorAll('.walkingleg').forEach(leg => {
+                        leg.classList.remove("walkingleg");
+                        leg.classList.add("leg");
+                    });
+
+                    // Remove the element from the array after successfully adding to the elevator
+                    floorsWithPeople[currentFloor] = floorsWithPeople[currentFloor].filter(h => h !== human);
+                    human.remove();
+
+                    // Update style for correct display on small screens
+                    updateHumanStyleInElevator();
+                }
+            }, 1000);
+        }, 50); // Small delay to ensure initial position is set
+
+        currentCount++; // Increment count to calculate the next target position
     }
 }
+
+function updateHumanStyleInElevator() {
+    const humansInElevator = elevatorElement.querySelectorAll('svg');
+    const elevatorWidth = elevatorElement.clientWidth;
+
+    humansInElevator.forEach((human, index) => {
+        human.style.width = (elevatorWidth / maxCapacity - 10) + 'px';
+        human.style.height = 'auto';
+        human.style.maxWidth = '20px'; // Limit max width of the human
+        human.style.position = 'absolute';
+        human.style.left = (index * (elevatorWidth / maxCapacity)) + 'px';
+    });
+}
+
+// Вызовем эту функцию при инициализации и при каждом перемещении человечков
+document.addEventListener('DOMContentLoaded', function() {
+    updateHumanStyleInElevator();
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     const floorsContainer = document.querySelector('.floors-container');
@@ -164,14 +285,13 @@ document.addEventListener('DOMContentLoaded', function() {
     stop();
 });
 
-
 function createHumanSVG(currentFloor) {
     let svgNS = "http://www.w3.org/2000/svg";
     let human = document.createElementNS(svgNS, "svg");
 
-    human.setAttribute("width", "20");
-    human.setAttribute("height", "60");
     human.setAttribute("viewBox", "0 0 20 60");
+    human.style.width = "auto";
+    human.style.height = "calc(100% - 10%)"; // Чуть меньше высоты контейнера
     human.style.marginRight = "5px";
     human.setAttribute("data-mood", "happy"); // Начальное настроение
     human.setAttribute("data-passes", "0"); // Количество пропущенных проходов
@@ -271,6 +391,9 @@ function createHumanSVG(currentFloor) {
 function checkGameCompletion() {
     const allFloors = document.querySelectorAll('.floor');
     let allHumansAtTarget = true;
+    // updateRecordDisplay(parseInt(localStorage.getItem('maxScore_elevator')) || 0, 'elevator');
+    loadRecords('elevator');
+    console.log(parseInt(localStorage.getItem('maxScore_elevator')|| 0))
 
     allFloors.forEach((floor, index) => {
         const floorNumber = totalFloors - index; // Этажи считаются снизу вверх
@@ -288,16 +411,17 @@ function checkGameCompletion() {
         document.getElementById('gameMessageText').textContent = "Игра завершена: Все человечки на своих этажах! Довольные: " + moodCounter.happy +
         ", Недовольные: " + moodCounter.unhappy + ", Злые: " + moodCounter.angry;
         document.getElementById('gameMessage').style.display = 'block';
+
+        const currentMaxScore = parseInt(localStorage.getItem('maxScore_elevator')) || 0;
+        if (score > currentMaxScore) {
+            writeRecord(score, 'elevator');
+            // updateRecordDisplay(score, 'elevator');
+            loadRecords('elevator');
+        }
     }
 }
 
-function restartGame() {
-    document.getElementById('gameMessage').style.display = 'none';
-    // Здесь можно добавить логику для сброса игры, например, очистка этажей и лифта от человечков
-}
-
-function updateHumanColor(human, color)
-{
+function updateHumanColor(human, color) {
     let bodyParts = human.querySelectorAll('.body-part');
     bodyParts.forEach(part => {
         part.style.fill = color;
@@ -320,6 +444,13 @@ function updateMood(floor) {
             } else if (mood === 'unhappy') {
                 human.setAttribute('data-mood', 'angry');
                 updateHumanColor(human, 'red')
+            } else if (mood === 'angry') {
+                // Удаляем злого человечка и вычитаем очко из счета
+                human.remove();
+                score -= 1;
+                console.log('Angry human disappeared. Current score: ' + score);
+                floorsWithPeople[floor] = floorsWithPeople[floor].filter(h => h !== human);
+                updateScoreDisplay(); // Обновляем отображение счета
             }
         }
 
@@ -341,7 +472,6 @@ function improveMood(human) {
             break;
         // если человечек уже доволен, то ничего не делаем
     }
-    
 
     // Обнуляем счётчик проходов, так как лифт остановился на этаже
     human.setAttribute('data-passes', '0');
@@ -350,5 +480,4 @@ function improveMood(human) {
 function updateMoodCounter(mood) {
     moodCounter[mood]++;
     console.log(mood + moodCounter[mood]);
-  }
-  
+}
