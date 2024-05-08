@@ -1,8 +1,9 @@
 import seedrandom from 'https://cdn.jsdelivr.net/npm/seedrandom@3.0.5/+esm'
-import * as THREE from 'https://cdn.skypack.dev/three@0.129.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.129.0/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from './data/three.module.js';
+import { GLTFLoader } from './data/GLTFLoader.js';
+import  {loadRecords, updateRecordDisplay, writeRecord} from '../records/record_functions.js'
 
-const rng = seedrandom('your_seed');
+const rng = seedrandom(Date.now().toString());
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -19,25 +20,114 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 directionalLight.position.set(0, 1, 0);
 scene.add(directionalLight);
 
-// Добавление кубической карты
-const cubeTextureLoader = new THREE.CubeTextureLoader();
-cubeTextureLoader.setPath('./data/skybox/'); // Укажите путь к папке с изображениями
-const skyboxTexture = cubeTextureLoader.load([
-    'left.jpg', 'right.jpg', 'top.jpg',
-    'bottom.jpg', 'front.jpg', 'back.jpg'
-]);
-scene.background = skyboxTexture;
+// Глобальная переменная для отслеживания состояния паузы
+let isGamePaused = false;
+
+// Элементы модального окна и кнопки рекордов
+const recordIcon = document.getElementById('recordIcon');
+const recordModal = document.getElementById('recordModal');
+const closeModal = document.getElementById('closeModal');
+if(recordIcon)
+{
+// Обработчик нажатия на кнопку рекордов
+recordIcon.addEventListener('click', function() {
+  // Отображаем модальное окно рекордов
+  recordModal.style.display = 'block';
+  // Ставим игру на паузу
+  isGamePaused = true;
+});
+}
+if (closeModal)
+{
+// Обработчик нажатия на кнопку закрытия модального окна
+closeModal.addEventListener('click', function() {
+  // Скрываем модальное окно рекордов
+  recordModal.style.display = 'none';
+  // Возобновляем игру
+  isGamePaused = false;
+  animate();
+  if (isSafari()) {
+    // Увеличьте скорость игры, например, умножив текущую скорость на коэффициент
+    animate();
+  }
+});
+}
+// Менеджер загрузки
+const manager = new THREE.LoadingManager();
+manager.onStart = function (url, itemsLoaded, itemsTotal) {
+  // Эта функция вызывается в начале загрузки очередного файла
+  console.log('Начата загрузка файла: ' + url + '.\nЗагружено ' + itemsLoaded + ' из ' + itemsTotal + ' файлов.');
+};
+
+// Функция для проверки, является ли браузер Safari
+function isSafari() {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+}
+
+
+
+
+manager.onLoad = function () {
+  onWindowResize();
+  // Эта функция вызывается, когда все текстуры загружены
+  console.log('Загрузка завершена!');
+  // Убираем экран загрузки
+  loadingScreen.style.display = 'none';
+  // Запускаем анимацию игры
+  animate();
+  // Увеличение скорости, если игра запущена в Safari
+  if (isSafari()) {
+    // Увеличьте скорость игры, например, умножив текущую скорость на коэффициент
+    animate();
+  }
+};
+
+manager.onProgress = function (url, itemsLoaded, itemsTotal) {
+  // Эта функция вызывается во время загрузки
+  console.log('Загрузка файла: ' + url + '.\nЗагружено ' + itemsLoaded + ' из ' + itemsTotal + ' файлов.');
+};
+
+manager.onError = function (url) {
+  // Эта функция вызывается, когда происходит ошибка загрузки
+  console.log('Ошибка при загрузке файла: ' + url);
+};
+
+const textureLoader = new THREE.TextureLoader(manager);
+textureLoader.load('data/background.jpg', function(texture) {
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.repeat.set(1, 1); // Установка повторения текстуры в 1 раз по каждой оси
+
+  // Определение аспекта текстуры в зависимости от размеров окна и текстуры
+  const backgroundAspect = texture.image.width / texture.image.height;
+  const windowAspect = window.innerWidth / window.innerHeight;
+
+  if (backgroundAspect > windowAspect) {
+      // Если аспект текстуры шире аспекта окна, обрезать по горизонтали
+      texture.offset.x = (1 - windowAspect / backgroundAspect) / 2;
+      texture.repeat.x = windowAspect / backgroundAspect;
+  } else {
+      // Если аспект текстуры уже аспекта окна, обрезать по вертикали
+      texture.offset.y = (1 - backgroundAspect / windowAspect) / 2;
+      texture.repeat.y = backgroundAspect / windowAspect;
+  }
+
+  scene.background = texture;
+});
+
 
 // Точечный свет
-const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+/*const pointLight = new THREE.PointLight(0xffffff, 1, 100);
 pointLight.position.set(0, 10, 5); // Позиция света
 scene.add(pointLight);
-
+*/
 // Скорость движения вперед
 const carForwardSpeed = 0.07;
 const carBoostSpeed = carForwardSpeed * 2; // Ускорение в 2 раза при удержании клавиши ускорения
 const carDegreaseSpeed = carForwardSpeed / 2;
 let currentForwardSpeed = carForwardSpeed;
+
+
 
 // Максимальная и минимальная скорость трафика
 const minTrafficSpeed = 0.05; // Минимальная скорость других машин
@@ -48,7 +138,7 @@ const trafficCarSize = new THREE.Vector3(1.2, 1.2, 2); // Примерные р�
 
 // Параметры дороги
 const roadWidth = 5;
-const roadLength = 100;
+const roadLength = 250;
 const roadMaterial = new THREE.MeshPhongMaterial({ color: 0x555555 });
 const roadGeometry = new THREE.PlaneGeometry(roadWidth, roadLength, 1, 1);
 
@@ -73,6 +163,7 @@ const objectsPerBatch = 15; // Количество объектов, генер
 
 let distanceTraveled = 0;
 const distanceDisplay = document.getElementById('distanceDisplay');
+const recordDisplay = document.getElementById('recordDisplay');
 
 // Функция для создания одного сегмента пунктира
 function createDash(zPosition) {
@@ -100,8 +191,25 @@ scene.add(car);
 let lastObjectZ = car.position.z - activationZone;
 let lastActivationZ = car.position.z - activationZone; // Запоминаем позицию последней активации
 
-// Создаем экземпляр загрузчика
-const loader = new GLTFLoader();
+// Элемент экрана загрузки
+const loadingScreen = document.createElement('div');
+loadingScreen.id = 'loading-screen';
+loadingScreen.innerText = 'Загрузка...';
+loadingScreen.style.position = 'absolute';
+loadingScreen.style.top = '0';
+loadingScreen.style.left = '0';
+loadingScreen.style.width = '100%';
+loadingScreen.style.height = '100%';
+loadingScreen.style.display = 'flex';
+loadingScreen.style.justifyContent = 'center';
+loadingScreen.style.alignItems = 'center';
+loadingScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+loadingScreen.style.color = 'white';
+loadingScreen.style.fontSize = '2em';
+document.body.appendChild(loadingScreen);
+
+const loader = new GLTFLoader(manager);
+
 
 let carLoaded = false;
 // Загружаем модель автомобиля
@@ -123,7 +231,7 @@ loader.load('./data/mercedes-benz_slr_mclaren_2005.glb', function(gltf) {
   // Обновляем ссылку на машину игрока для использования в функциях анимации и управления
   car = carModel;
   carLoaded = true;
-  animate();
+  //animate();
 }, undefined, function(error) {
   console.error(error);
 });
@@ -136,28 +244,19 @@ const modelsCache = {
 const carModels = {};
 
 const modelScales = {
-  //'2021_volkswagen_golf_gti.glb': { x: 0.07, y: 0.07, z: 0.07 }//,
-  //'2103.glb': { x: 0.8, y: 0.8, z: 0.8 }
-  'Corolla.glb': { x: 0.7, y: 0.7, z: 0.7 },
+  // 'Corolla.glb': { x: 0.7, y: 0.7, z: 0.7 },
   'kia_optima_k5.glb': { x: 0.0075, y: 0.0075, z: 0.0075 },
-  // 'Car.glb': { x: 0.75, y: 0.75, z: 0.75 },
-  // 'audi r8.glb': { x: 0.0075, y: 0.0075, z: 0.0075 }
-  // 'bmw_m3_competition_tourning_g81.glb': { x: 0.75, y: 0.75, z: 0.75 }
-  'old_rusty_car.glb': { x: 0.004, y: 0.004, z: 0.004 },
-  'bentley_car.glb': { x: 0.0006, y: 0.0006, z: 0.0006 }
-  //'papercar.glb':  { x: 0.75, y: 0.75, z: 0.75 },
-  //'mercedes-benz_g-class_free_download.glb':  { x: 0.75, y: 0.75, z: 0.75 }
-  //'lr.glb': { x: 0.0075, y: 0.0075, z: 0.0075 }//,
-  //'AM DB2.glb': { x: 0.0075, y: 0.0075, z: 0.0075 }
-  //'C2 ivory 1.glb': { x: 0.0075, y: 0.0075, z: 0.0075 }
-  //'mitsubishi_lancer_evo_x.glb': { x: 0.3, y: 0.3, z: 0.3 }
-  //'tesla_model_x.glb': { x: 0.0075, y: 0.0075, z: 0.0075 }
+  'old_rusty_car.glb': { x: 0.005, y: 0.0048, z: 0.005 },
+  // 'bentley_car.glb': { x: 0.0006, y: 0.0006, z: 0.0006 }
+  'mitsubishi_lancer_evo_x.glb': { x: 0.3, y: 0.26, z: 0.3 },
 };
 
 
 // Предварительная загрузка и кэширование моделей
 function preloadModels() {
   // Загрузка зданий и деревьев
+  // updateRecordDisplay(parseInt(localStorage.getItem('maxScore_shashki')), 'shashki');
+  loadRecords('shashki')
   loader.load('./data/building.glb', function(gltf) {
       modelsCache.building = gltf.scene;
   }, undefined, function(error) {
@@ -187,7 +286,7 @@ function loadBuildingModel(x, z) {
   if (modelsCache.building) {
     const building = modelsCache.building.clone();
     building.position.set(x, 0, z);
-    building.scale.set(0.1, 0.1, 0.1); // Настройте масштаб в соответствии с вашей моделью
+    building.scale.set(0.1, 0.1, 0.1);
     // Поворачиваем здание на случайный угол с шагом в 90 градусов
     const randomRotation = Math.floor(rng() * 4) * (Math.PI / 2);
     building.rotation.y = randomRotation;
@@ -201,7 +300,7 @@ function loadTreeModel(x, z) {
   if (modelsCache.tree) {
     const tree = modelsCache.tree.clone();
     tree.position.set(x, 0, z);
-    tree.scale.set(0.1, 0.1, 0.1); // Настройте масштаб в соответствии с вашей моделью
+    tree.scale.set(0.1, 0.1, 0.1); 
     // Поворачиваем дерево на случайный угол
     const randomRotation = rng() * Math.PI * 2;
     tree.rotation.y = randomRotation;
@@ -212,6 +311,7 @@ function loadTreeModel(x, z) {
 
 // Функция для создания одного объекта в случайном месте
 function createRandomObject(z) {
+  //return;
   const side = rng() < 0.5 ? -1 : 1; // Случайно выбираем сторону: -1 для левой, 1 для правой
   const x = side * ((roadWidth + 1) / 2 + rng() * 15); // Случайное расстояние от дороги
 
@@ -257,8 +357,8 @@ const otherCars = [];
 const otherCarGeometry = new THREE.BoxGeometry(1.3, 0.5, 2);
 const otherCarMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff });
 // const otherCarSpeed = 0.05; // Скорость других машин меньше, чем у управляемой машины
-const minDistanceBetweenCars = 10; // Минимальное расстояние между машинами
-const maxDistanceBetweenCars = 30; // Максимальное расстояние между машинами
+const minDistanceBetweenCars = 14; // Минимальное расстояние между машинами
+const maxDistanceBetweenCars = 25; // Максимальное расстояние между машинами
 
 function createOtherCar() {
   const lane = lanes[Math.floor(rng() * lanes.length)];
@@ -283,7 +383,8 @@ function createOtherCar() {
   const lastCar = otherCars[otherCars.length - 1];
   let zPosition = lastCar ? lastCar.position.z - minDistanceBetweenCars - rng() * (maxDistanceBetweenCars - minDistanceBetweenCars) : car.position.z - 50;
 
-  cloneCarModel.position.set(lane, 0.25, zPosition);
+  const yPos = modelKey === 'mitsubishi_lancer_evo_x.glb' ? 0.9 : 0.25;
+  cloneCarModel.position.set(lane, yPos, zPosition);
   cloneCarModel.rotation.y = Math.PI; // Повернуть машину
 
   const speed = minTrafficSpeed + rng() * (maxTrafficSpeed - minTrafficSpeed);
@@ -298,7 +399,7 @@ function createOtherCar() {
 }
 
 // Создаем начальное количество машин
-const initialOtherCarsCount = 100;
+const initialOtherCarsCount = 15;
 for (let i = 0; i < initialOtherCarsCount; i++) {
   createOtherCar();
 }
@@ -321,9 +422,22 @@ function checkCollisions() {
   return false; // Коллизия не обнаружена
 }
 
+function checkGameOver() {
+  const currentMaxScore = parseInt(localStorage.getItem('maxScore_shashki')) || 0;
+  var score = Math.round(distanceTraveled);
+  if (score > currentMaxScore) {
+      writeRecord(score, 'shashki');
+      // updateRecordDisplay(score, 'shashki');
+      loadRecords('shashki')
+  }
+  alert("Game Over! Final score: " + score);
+}
+
 function endGame() {
   // Остановить анимацию
   cancelAnimationFrame(animationFrameId); // Отменяем запрос анимации
+  isGamePaused = true;
+  checkGameOver();
 
   // Отобразить сообщение о проигрыше
   const gameOverMessage = document.createElement('div');
@@ -350,6 +464,8 @@ function endGame() {
 }
 
 function restartGame() {
+  // updateRecordDisplay(parseInt(localStorage.getItem('maxScore_shashki')) || 0, 'shashki');
+  loadRecords('shashki')
   window.location.reload();/*
   // Сбросить состояние игры
   distanceTraveled = 0; // Сбросить расстояние
@@ -363,17 +479,34 @@ function restartGame() {
   animate(); // Перезапустить цикл анимации*/
 }
 
+const keyCodeMap = {
+  87: 'w', // W
+  65: 'a', // A
+  83: 's', // S
+  68: 'd', // D
+  37: 'arrowleft',  // Left arrow
+  38: 'arrowup',    // Up arrow
+  39: 'arrowright', // Right arrow
+  40: 'arrowdown'   // Down arrow
+};
+
 // Объект для хранения информации о состоянии клавиш
 const keysPressed = {};
 
 // Функция для обработки нажатия клавиш
 function onKeyDown(event) {
-  keysPressed[event.key.toLowerCase()] = true;
+  const key = keyCodeMap[event.keyCode];
+  if (key) {
+    keysPressed[key] = true;
+  }
 }
 
 // Функция для обработки отпускания клавиш
 function onKeyUp(event) {
-  keysPressed[event.key.toLowerCase()] = false;
+  const key = keyCodeMap[event.keyCode];
+  if (key) {
+    keysPressed[key] = false;
+  }
 }
 
 // Подписываемся на события клавиатуры
@@ -404,12 +537,37 @@ function getTouchZone(touch) {
   }
 }
 
+function isTouchInButtonZone(touch) {
+  const recordIcon = document.getElementById('recordIcon'); // Получаем элемент кнопки "Рекорды"
+  if (!recordIcon) return false; // Если элемент не найден, возвращаем false
+
+  const rect = recordIcon.getBoundingClientRect(); // Получаем размеры и позицию кнопки
+
+  // Проверяем, находится ли точка касания внутри координат кнопки
+  return (
+    touch.clientX >= rect.left &&
+    touch.clientX <= rect.right &&
+    touch.clientY >= rect.top &&
+    touch.clientY <= rect.bottom
+  );
+}
+
 function onTouchStart(event) {
-  event.preventDefault();
+
   const touches = event.changedTouches;
-  
+
   for (let i = 0; i < touches.length; i++) {
     const touch = touches[i];
+    if (isGamePaused) {
+      // Если игра на паузе, пропускаем обработку сенсорных событий
+      return;
+    }
+
+    if (isTouchInButtonZone(touch)) {
+      continue; // Пропускаем касание, чтобы не блокировать стандартное поведение
+    }
+    event.preventDefault();
+
     const zone = getTouchZone(touch);
 
     if (zone === 'left') {
@@ -425,12 +583,23 @@ function onTouchStart(event) {
 }
 
 function onTouchEnd(event) {
-  event.preventDefault();
+
   const touches = event.changedTouches;
-  
+
   for (let i = 0; i < touches.length; i++) {
     const touch = touches[i];
+
+    if (isTouchInButtonZone(touch)) {
+      continue; // Пропускаем касание, чтобы не блокировать стандартное поведение
+    }
+
+    if (isGamePaused) {
+      // Если игра на паузе, пропускаем обработку сенсорных событий
+      return;
+    }
+    event.preventDefault();
     const zone = getTouchZone(touch);
+
 
     if (zone === 'left') {
       keysPressed['a'] = false;
@@ -455,7 +624,8 @@ const activationDistance = 10; // Расстояние, на котором др
 let animationFrameId; // Глобальная переменная для хранения ID запроса анимации
 
 function animate() {
-  if (!carLoaded) {
+  if (!carLoaded || isGamePaused) {
+    // Если машина не загружена или игра на паузе, пропускаем кадр
     return;
   }
 
@@ -466,7 +636,7 @@ function animate() {
 
   distanceTraveled += currentForwardSpeed; // Увеличиваем на пройденное расстояние за кадр
   distanceDisplay.textContent = `Проехано: ${Math.round(distanceTraveled)} м`;
-  
+  recordDisplay.textContent = `Рекорд: ${(parseInt(localStorage.getItem('maxScore_shashki')) || 0)} м`
   // Проверка столкновений перед обновлением позиции машины игрока
   if (checkCollisions()) {
     endGame();
@@ -480,18 +650,18 @@ function animate() {
   if ((keysPressed['d'] || keysPressed['arrowright']) && car.position.x < (roadWidth / 2 - 0.5)) {
     car.position.x += 0.05;
   }
-  
+
   if (keysPressed['w'] || keysPressed['arrowup']) {
     currentForwardSpeed = carBoostSpeed; // Ускоряем машину вперед
-  } 
+  }
   else if (keysPressed['s'] || keysPressed['arrowdown']){
     currentForwardSpeed = carDegreaseSpeed; // Замедляем машину
-  } 
+  }
   else {
     currentForwardSpeed = carForwardSpeed; // Возвращаем обычную скорость
   }
   car.position.z -= currentForwardSpeed;
-  
+
   dashes.forEach(dash => {
     dash.position.z += currentForwardSpeed; // Двигаем разметку вместе с машиной
     // Перемещаем разметку обратно в начало, когда она выходит за пределы видимости
@@ -522,10 +692,19 @@ function animate() {
 
     // Если другая машина активирована, она движется
     if (otherCar.userData.isActive) {
+      for (let j = 0; j < otherCars.length; j++) {
+        if (i !== j) {
+          const otherCar2 = otherCars[j];
+          const distance = otherCar.position.z - otherCar2.position.z;
+          if (distance > 0 && distance < 5) { // Если другая машина впереди и близко
+            otherCar.userData.speed = Math.max(otherCar2.userData.speed - 0.02, 0); // Уменьшить скорость
+          }
+        }
+      }
       otherCar.position.z -= otherCar.userData.speed;
       otherCar.userData.isActive = false;
     }
-   
+
     // Удаление машин, когда они выходят за пределы заданного диапазона Z
     if (otherCar.position.z > camera.position.z + roadLength / 2) {
       scene.remove(otherCar);
@@ -551,4 +730,19 @@ function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // Обновление фона сцены, если требуется, для поддержания правильного аспектного соотношения
+  const backgroundTexture = scene.background;
+  if (backgroundTexture) {
+    const backgroundAspect = backgroundTexture.image.width / backgroundTexture.image.height;
+    const windowAspect = window.innerWidth / window.innerHeight;
+
+    if (backgroundAspect > windowAspect) {
+      backgroundTexture.offset.x = (1 - windowAspect / backgroundAspect) / 2;
+      backgroundTexture.repeat.x = windowAspect / backgroundAspect;
+    } else {
+      backgroundTexture.offset.y = (1 - backgroundAspect / windowAspect) / 2;
+      backgroundTexture.repeat.y = backgroundAspect / windowAspect;
+    }
+  }
 }

@@ -17,10 +17,24 @@
             border-radius: 5px; /* Скругление углов */
             z-index: 1; /* Убедимся, что счетчик будет виден поверх канваса */
         }
+        #recordDisplay {
+            position: absolute; /* Для позиционирования поверх канваса */
+            top: 40px; /* Отступ сверху */
+            left: 10px; /* Отступ слева */
+            color: white; /* Цвет текста */
+            background: rgba(0, 0, 0, 0.5); /* Полупрозрачный фон */
+            padding: 5px; /* Внутренний отступ */
+            border-radius: 5px; /* Скругление углов */
+            z-index: 1; /* Убедимся, что счетчик будет виден поверх канваса */
+        }
     </style>
 </head>
 <body>
     <div id="distanceDisplay">Проехано: 0 м</div>
+    <div id="recordDisplay">Рекорд: 0 м</div>
+
+    <script src="../records/record_script_for_html.js"></script>
+    <script type="module" src="../records/record_functions.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 </html>
