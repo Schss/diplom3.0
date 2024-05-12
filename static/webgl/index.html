@@ -1,25 +1,158 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
+<head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style>
+        .button {
+            position: absolute;
+            width: 100px; /* Увеличена ширина кнопок */
+            height: 100px; /* Увеличена высота кнопок */
+            opacity: 0.7;
+            z-index: 1000;
+            font-size: 40px; /* Увеличен размер шрифта */
+            text-align: center;
+            line-height: 100px; /* Центрирование текста по вертикали */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        #buttonW { bottom: 220px; left: 120px; }
+        #buttonA { bottom: 120px; left: 20px; }
+        #buttonS { bottom: 120px; left: 120px; }
+        #buttonD { bottom: 120px; left: 220px; }
+        #buttonR { bottom: 220px; left: 220px; }
+        #buttonQ { bottom: 220px; left: 320px; }
+        #buttonB { bottom: 120px; left: 320px; }
+        /* Предотвращение выделения текста */
+        button, canvas, body {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none;   /* Chrome/Safari/Opera */
+            -khtml-user-select: none;    /* Konqueror */
+            -moz-user-select: none;      /* Firefox */
+            -ms-user-select: none;       /* Internet Explorer/Edge */
+            user-select: none;           /* Non-prefixed version, currently supported by Chrome and Opera */
+        }
+
+        /* Отключение двойного клика для приближения */
+        body {
+            touch-action: manipulation;
+        }
+    </style>
     <title>Unity WebGL Player | GameUnity</title>
-  </head>
-  <body style="text-align: center">
+</head>
+<body style="text-align: center">
     <canvas id="unity-canvas" width=960 height=600 style="width: 960px; height: 600px; background: #231F20"></canvas>
+    <button class="button" id="buttonW" style="display:none;">W</button>
+    <button class="button" id="buttonA" style="display:none;">A</button>
+    <button class="button" id="buttonS" style="display:none;">S</button>
+    <button class="button" id="buttonD" style="display:none;">D</button>
+    <button class="button" id="buttonR" style="display:none;">R</button>
+    <button class="button" id="buttonQ" style="display:none;">Q</button>
+    <button class="button" id="buttonB" style="display:none;">B</button>
+
     <script src="Build/webgl.loader.js"></script>
     <script>
-      createUnityInstance(document.querySelector("#unity-canvas"), {
-        dataUrl: "Build/webgl.data.gz",
-        frameworkUrl: "Build/webgl.framework.js.gz",
-        codeUrl: "Build/webgl.wasm.gz",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "GameUnity",
-        productVersion: "0.1",
-        // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
-        // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
-      });
+        var gameInstance = null;
+
+        function onUnityProgress(gameInstance, progress) {
+            console.log("Loading progress: " + progress);
+        }
+
+        function onUnityInitialized(instance) {
+            console.log("Unity initialized");
+            gameInstance = instance;
+            initializeButtonListeners();
+        }
+
+        function sendMessageToUnity(key, isPressed) {
+            if (gameInstance && gameInstance.SendMessage) {
+                gameInstance.SendMessage('HorizontalCube', 'OnVirtualKeyPress', key + ',' + isPressed);
+                gameInstance.SendMessage('HorizontalCube (1)', 'OnVirtualKeyPress', key + ',' + isPressed);
+                gameInstance.SendMessage('MainCube', 'OnVirtualKeyPress', key + ',' + isPressed);
+                gameInstance.SendMessage('Vertical', 'OnVirtualKeyPress', key + ',' + isPressed);
+            } else {
+                console.error('gameInstance или gameInstance.SendMessage не определен');
+            }
+        }
+
+        function initializeButtonListeners() {
+            document.getElementById('buttonW').addEventListener('mousedown', function() { sendMessageToUnity('W', true); });
+            document.getElementById('buttonW').addEventListener('mouseup', function() { sendMessageToUnity('W', false); });
+            document.getElementById('buttonA').addEventListener('mousedown', function() { sendMessageToUnity('A', true); });
+            document.getElementById('buttonA').addEventListener('mouseup', function() { sendMessageToUnity('A', false); });
+            document.getElementById('buttonS').addEventListener('mousedown', function() { sendMessageToUnity('S', true); });
+            document.getElementById('buttonS').addEventListener('mouseup', function() { sendMessageToUnity('S', false); });
+            document.getElementById('buttonD').addEventListener('mousedown', function() { sendMessageToUnity('D', true); });
+            document.getElementById('buttonD').addEventListener('mouseup', function() { sendMessageToUnity('D', false); });
+            document.getElementById('buttonR').addEventListener('mousedown', function() { sendMessageToUnity('R', true); });
+            document.getElementById('buttonR').addEventListener('mouseup', function() { sendMessageToUnity('R', false); });
+            document.getElementById('buttonQ').addEventListener('mousedown', function() { sendMessageToUnity('Q', true); });
+            document.getElementById('buttonQ').addEventListener('mouseup', function() { sendMessageToUnity('Q', false); });
+            document.getElementById('buttonB').addEventListener('mousedown', function() { sendMessageToUnity('B', true); });
+            document.getElementById('buttonB').addEventListener('mouseup', function() { sendMessageToUnity('B', false); });
+
+            document.getElementById('buttonW').addEventListener('touchstart', function() { sendMessageToUnity('W', true); });
+            document.getElementById('buttonW').addEventListener('touchend', function() { sendMessageToUnity('W', false); });
+            document.getElementById('buttonA').addEventListener('touchstart', function() { sendMessageToUnity('A', true); });
+            document.getElementById('buttonA').addEventListener('touchend', function() { sendMessageToUnity('A', false); });
+            document.getElementById('buttonS').addEventListener('touchstart', function() { sendMessageToUnity('S', true); });
+            document.getElementById('buttonS').addEventListener('touchend', function() { sendMessageToUnity('S', false); });
+            document.getElementById('buttonD').addEventListener('touchstart', function() { sendMessageToUnity('D', true); });
+            document.getElementById('buttonD').addEventListener('touchend', function() { sendMessageToUnity('D', false); });
+            document.getElementById('buttonR').addEventListener('touchstart', function() { sendMessageToUnity('R', true); });
+            document.getElementById('buttonR').addEventListener('touchend', function() { sendMessageToUnity('R', false); });
+            document.getElementById('buttonQ').addEventListener('touchstart', function() { sendMessageToUnity('Q', true); });
+            document.getElementById('buttonQ').addEventListener('touchend', function() { sendMessageToUnity('Q', false); });
+            document.getElementById('buttonB').addEventListener('touchstart', function() { sendMessageToUnity('B', true); });
+            document.getElementById('buttonB').addEventListener('touchend', function() { sendMessageToUnity('B', false); });
+        }
+
+        function showButtonsIfTouchDevice() {
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            if (isTouchDevice) {
+                document.getElementById('buttonW').style.display = 'block';
+                document.getElementById('buttonA').style.display = 'block';
+                document.getElementById('buttonS').style.display = 'block';
+                document.getElementById('buttonD').style.display = 'block';
+                document.getElementById('buttonR').style.display = 'block';
+                document.getElementById('buttonQ').style.display = 'block';
+                document.getElementById('buttonB').style.display = 'block';
+            }
+        }
+
+        window.onload = function() {
+            createUnityInstance(document.querySelector("#unity-canvas"), {
+                dataUrl: "Build/webgl.data.gz",
+                frameworkUrl: "Build/webgl.framework.js.gz",
+                codeUrl: "Build/webgl.wasm.gz",
+                streamingAssetsUrl: "StreamingAssets",
+                companyName: "DefaultCompany",
+                productName: "GameUnity",
+                productVersion: "0.1",
+                onProgress: onUnityProgress,
+            }).then(instance => {
+                onUnityInitialized(instance);
+            }).catch(error => {
+                console.error("Unity initialization error:", error);
+            });
+
+            showButtonsIfTouchDevice();
+        };
+
+        // Перехват сообщений об ошибках и выполнение редиректа при выходе из Unity
+        (function() {
+            const originalConsoleError = console.error;
+            console.log = function(message) {
+                if (typeof message === 'string' && message.includes('Quitting...')) {
+                    window.location.href = '/';
+                }
+                originalConsoleError.apply(console, arguments);
+            };
+        })();
     </script>
-  </body>
+</body>
 </html>
