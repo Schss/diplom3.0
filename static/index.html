@@ -9,7 +9,7 @@
             font-family: 'Roboto', sans-serif;
             background-color: #343a40;
             margin: 0;
-            padding-top: 10%;
+            padding-top: 2%;
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -53,9 +53,12 @@
             display: block;
             margin-bottom: 5px;
         }
-        .game-image {
+        .game-video {
             max-width: 100%;
-            height: auto; /* Высота изображения будет подстраиваться автоматически */
+            height: auto;
+            max-height: 300px;
+            width: auto; /* Ширина будет автоматически подстраиваться */
+            object-fit: contain; /* Сохранение пропорций видео */
             border-radius: 5px;
             transition: opacity 0.3s ease;
         }
@@ -73,48 +76,65 @@
 <body>
     <div class="container">
         <h1>Добро пожаловать на игровой портал!</h1>
-        <a href="balloons/index.html" class="game-link" 
+        <a href="balloons/index.html" class="game-link"
             onmouseenter="previewAnimation(this, true)" onmouseleave="previewAnimation(this, false)"
             ontouchstart="previewAnimation(this, true)" ontouchend="previewAnimation(this, false)">
             <span class="game-title">Игра с воздушными шарами</span>
-            <img src="balloons/static-image.png" alt="Превью игры с воздушными шарами" class="game-image" data-static="balloons/static-image.png" data-animated="balloons/animated-preview.gif">
+            <video src="demos/balloons.mp4" class="game-video" data-static="balloons/preview.mp4" muted playsinline></video>
         </a>
         <a href="cubes/index.html" class="game-link"
             onmouseenter="previewAnimation(this, true)" onmouseleave="previewAnimation(this, false)"
             ontouchstart="previewAnimation(this, true)" ontouchend="previewAnimation(this, false)">
             <span class="game-title">Игра с кубиками</span>
-            <img src="cubes/static-image.png" alt="Превью игры с кубиками" class="game-image" data-static="cubes/static-image.png" data-animated="cubes/animated-preview.gif">
+            <video src="demos/cubes.mp4" class="game-video" data-static="cubes/preview.mp4" muted playsinline></video>
         </a>
-        <a href="elevator/index.html" class="game-link">
+        <a href="elevator/index.html" class="game-link"
+        onmouseenter="previewAnimation(this, true)" onmouseleave="previewAnimation(this, false)"
+        ontouchstart="previewAnimation(this, true)" ontouchend="previewAnimation(this, false)">
             <span class="game-title">Игра с лифтом</span>
-            <img src="elevator/static-image.png" alt="Превью игры с лифтом" class="game-image" data-static="elevator/static-image.png" data-animated="elevator/animated-preview.gif">
+            <video src="demos/elevator.mp4" class="game-video" data-static="elevator/preview.mp4" muted playsinline></video>
         </a>
         <a href="shashki/index.html" class="game-link"
             onmouseenter="previewAnimation(this, true)" onmouseleave="previewAnimation(this, false)"
             ontouchstart="previewAnimation(this, true)" ontouchend="previewAnimation(this, false)">
             <span class="game-title">Игра Шашки по городу</span>
-            <img src="shashki/static-image.png" alt="Превью игры в Шашки" class="game-image" data-static="shashki/static-image.png" data-animated="shashki/animated-preview.gif">
+            <video src="demos/shashki.mp4" class="game-video" data-static="shashki/preview.mp4" muted playsinline></video>
         </a>
         <a href="webgl/index.html" class="game-link"
             onmouseenter="previewAnimation(this, true)" onmouseleave="previewAnimation(this, false)"
             ontouchstart="previewAnimation(this, true)" ontouchend="previewAnimation(this, false)">
             <span class="game-title">Игра Unity</span>
-            <img src="webgl/static-image.png" alt="Превью игры Unity" class="game-image" data-static="webgl/static-image.png" data-animated="webgl/animated-preview.gif">
+            <video src="demos/unity.mp4" class="game-video" data-static="webgl/preview.mp4" muted playsinline></video>
         </a>
     </div>
 
     <script>
         // Функция для изменения превью игры
         function previewAnimation(element, isAnimated) {
-            var image = element.querySelector('.game-image');
+            var video = element.querySelector('.game-video');
             if (isAnimated) {
-                // Меняем на анимированную гифку
-                image.src = image.getAttribute('data-animated');
+                // Воспроизвести видео
+                video.play();
             } else {
-                // Возвращаем статичное изображение
-                image.src = image.getAttribute('data-static');
+                // Остановить видео и показать первый кадр
+                video.pause();
+                video.currentTime = 0;
             }
         }
+
+        // Функция для инициализации видео на устройствах iOS
+        function initializeVideos() {
+            var videos = document.querySelectorAll('.game-video');
+            videos.forEach(function(video) {
+                video.play().then(() => {
+                    video.pause();
+                    video.currentTime = 0;
+                });
+            });
+        }
+
+        // Инициализация видео при загрузке страницы
+        window.addEventListener('load', initializeVideos);
     </script>
 </body>
 </html>
