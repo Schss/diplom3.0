@@ -1,4 +1,8 @@
-import  {submitRecord, updateRecordDisplay, writeRecord} from '../records/record_functions.js'
+import {
+    submitRecord,
+    updateRecordDisplay,
+    writeRecord
+} from '../records/record_functions.js'
 
 // Глобальные переменные
 const gameBoard = document.getElementById('game-board');
@@ -16,7 +20,7 @@ function generateRandomColor() {
 }
 
 function initializeGame(numberOfColors, cubes) {
-    gameBoard.innerHTML = '';  // Очищаем игровое поле
+    gameBoard.innerHTML = ''; // Очищаем игровое поле
 
     let colors = [];
     for (let i = 0; i < numberOfColors; i++) {
@@ -82,6 +86,7 @@ function restartGame() {
 
     if ((numberOfColors > 50 || cubesPerColor > 50) && !confirm('А оперативки хватит? :)'))
         return;
+
     // Очищаем игровое поле
     while (gameBoard.firstChild) {
         gameBoard.removeChild(gameBoard.firstChild);
@@ -96,7 +101,6 @@ function restartGame() {
     const maxFieldSizeRecord = localStorage.getItem('maxScore_cubes') || 0;
     updateRecordDisplay(maxFieldSizeRecord, 'cubes');
 }
-
 
 function showRestartButton() {
     // Проверяем, существует ли уже кнопка перезапуска
@@ -188,7 +192,10 @@ function getTopGroup(column) {
     group = group.reverse();
 
     // Возвращаем группу кубиков или null, если кубиков нет
-    return group.length > 0 ? { color: topCubeColor, cubes: group } : null;
+    return group.length > 0 ? {
+        color: topCubeColor,
+        cubes: group
+    } : null;
 }
 
 
