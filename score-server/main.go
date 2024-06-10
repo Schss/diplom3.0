@@ -140,6 +140,7 @@ func recordHandler(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
 			return
 		}
+		json.NewEncoder(w).Encode(HashResponse{Hash: record.Hash})
 	}
 
 	err = updateOrCreateRecord(record)
