@@ -47,7 +47,7 @@ closeModal.addEventListener('click', function() {
   isGamePaused = false;
   animate();
   if (isSafari()) {
-    // Увеличьте скорость игры, например, умножив текущую скорость на коэффициент
+    // Увеличение скорости игры
     animate();
   }
 });
@@ -77,7 +77,6 @@ manager.onLoad = function () {
   animate();
   // Увеличение скорости, если игра запущена в Safari
   if (isSafari()) {
-    // Увеличьте скорость игры, например, умножив текущую скорость на коэффициент
     animate();
   }
 };
@@ -115,19 +114,11 @@ textureLoader.load('data/background.jpg', function(texture) {
   scene.background = texture;
 });
 
-
-// Точечный свет
-/*const pointLight = new THREE.PointLight(0xffffff, 1, 100);
-pointLight.position.set(0, 10, 5); // Позиция света
-scene.add(pointLight);
-*/
 // Скорость движения вперед
 const carForwardSpeed = 0.07;
 const carBoostSpeed = carForwardSpeed * 2; // Ускорение в 2 раза при удержании клавиши ускорения
 const carDegreaseSpeed = carForwardSpeed / 2;
 let currentForwardSpeed = carForwardSpeed;
-
-
 
 // Максимальная и минимальная скорость трафика
 const minTrafficSpeed = 0.05; // Минимальная скорость других машин
@@ -464,19 +455,8 @@ function endGame() {
 }
 
 function restartGame() {
-  // updateRecordDisplay(parseInt(localStorage.getItem('maxScore_shashki')) || 0, 'shashki');
   loadRecords('shashki')
-  window.location.reload();/*
-  // Сбросить состояние игры
-  distanceTraveled = 0; // Сбросить расстояние
-  car.position.set(0, 0.25, 5); // Сбросить позицию машины игрока
-  otherCars.forEach(otherCar => {
-    scene.remove(otherCar); // Удалить машины из сцены
-  });
-  otherCars.length = 0; // Очистить массив машин
-
-  // Запустить анимацию снова
-  animate(); // Перезапустить цикл анимации*/
+  window.location.reload();
 }
 
 const keyCodeMap = {
